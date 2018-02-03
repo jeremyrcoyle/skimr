@@ -68,13 +68,14 @@ skim <- function(.data, ...) {
 }
 
 #'@export
-
-skim.data.frame <- function(.data, ... ) {
+skim.data.frame <- function(.data, vector_types = NULL, ... ) {
   .vars <- rlang::quos(...)
   if (length(.vars) == 0)  selected <- tidyselect::everything(.data)
   else  selected <- tidyselect::vars_select(names(.data), !!! .vars) 
-
-  rows <- purrr::map(.data[selected], skim_v)
+  
+  all_vector_types <- sapply(.data[selected], data.class)
+  all_vector_types[names(vector_types)] <- unlist(vector_types)
+  rows <- purrr::map2(.data[selected], all_vector_types, skim_v)
   combined <- dplyr::bind_rows(rows, .id = "variable")
   structure(combined, class = c("skim_df", class(combined)),
             data_rows = nrow(.data), data_cols = ncol(.data), 
